@@ -1,8 +1,8 @@
 /*{{{  includes */
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "aterm2.h"
 #include "_afun.h"
 #include "memory.h"
@@ -30,8 +30,6 @@
 /*}}}  */
 /*{{{  globals */
 
-char afun_id[] = "$Id$";
-
 static unsigned int table_class = INITIAL_AFUN_TABLE_CLASS;
 static unsigned int table_size  = AT_TABLE_SIZE(INITIAL_AFUN_TABLE_CLASS);
 static unsigned int table_mask  = AT_TABLE_MASK(INITIAL_AFUN_TABLE_CLASS);
@@ -52,7 +50,8 @@ ATerm    *at_lookup_table_alias = NULL;
 /*{{{  function declarations */
 
 #if !(defined __USE_SVID || defined __USE_BSD || defined __USE_XOPEN_EXTENDED || defined __APPLE__ || defined _MSC_VER)
-extern char *strdup(const char *s);
+//Rasmussen MODIFIED
+//extern char *strdup(const char *s);
 #endif
 
 /*}}}  */
@@ -99,9 +98,9 @@ static void resize_table()
 
 /*}}}  */
 
-/*{{{  unsigned int AT_symbolTableSize() */
+/*{{{  size_t AT_symbolTableSize() */
 
-unsigned int AT_symbolTableSize()
+size_t AT_symbolTableSize()
 {
   return table_size;
 }
@@ -143,10 +142,10 @@ void AT_initSymbol(int argc, char *argv[])
   }
 
   for (i = first_free = 0; i < table_size; i++) {
-    at_lookup_table[i] = (SymEntry) SYM_SET_NEXT_FREE(i+1);
+    at_lookup_table[i] = (SymEntry) SYM_SET_NEXT_FREE(i+1L);
   }
 
-  at_lookup_table[i-1] = (SymEntry) SYM_SET_NEXT_FREE(-1);		/* Sentinel */
+  at_lookup_table[i-1] = (SymEntry) SYM_SET_NEXT_FREE(-1L);		/* Sentinel */
 
   protected_symbols = (Symbol *)AT_calloc(INITIAL_PROTECTED_SYMBOLS, 
 				       sizeof(Symbol));
@@ -240,17 +239,17 @@ int AT_printSymbol(AFun fun, FILE *f)
 }
 
 /*}}}  */
-/*{{{  int AT_writeAFun(AFun fun, byte_writer *writer) */
+/*{{{  size_t AT_writeAFun(AFun fun, byte_writer *writer) */
 
 /**
   * Print an afun.
   */
 
-int AT_writeAFun(AFun fun, byte_writer *writer)
+size_t AT_writeAFun(AFun fun, byte_writer *writer)
 {
   SymEntry entry = at_lookup_table[fun];
   char *id = entry->name;
-  int size = 0;
+  size_t size = 0;
 
   if (IS_QUOTED(entry->header)) {
     /* This function symbol needs quotes */
@@ -387,7 +386,7 @@ Symbol ATmakeSymbol(const char *name, int arity, ATbool quoted)
   
   if(arity >= MAX_ARITY) {
     ATabort("cannot handle symbols with arity %d (max=%d)\n",
-	    arity, MAX_ARITY-1);
+            arity, MAX_ARITY-1);
   }
 
   /* Find symbol in table */
@@ -408,7 +407,7 @@ Symbol ATmakeSymbol(const char *name, int arity, ATbool quoted)
      
       free_entry = first_free;
       if (free_entry == -1) {
-	ATerror("AT_initSymbol: out of symbol slots!\n");
+        ATerror("AT_initSymbol: out of symbol slots!\n");
       }
     }
 

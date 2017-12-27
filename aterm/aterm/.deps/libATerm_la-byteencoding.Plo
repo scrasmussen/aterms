@@ -1,0 +1,6 @@
+libATerm_la-byteencoding.lo: byteencoding.c /usr/include/stdc-predef.h \
+ byteencoding.h
+
+/usr/include/stdc-predef.h:
+
+byteencoding.h:

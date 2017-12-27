@@ -42,8 +42,6 @@ char* strdup(const char* str)
 /*}}}  */
 /*{{{  globals */
 
-char stress_id[] = "$Id$";
-
 #ifdef ABORT_ON_PARSE_ERROR
 ATbool parse_error_encountered = ATfalse
 #endif
@@ -442,9 +440,11 @@ void testList(void)
 			       ATcompare),
 			ATparse("[a,b,c,f(b),f(b,1),1.2,1.3]")));
 
-  /* Test extremly long lists */
+  /* Test extremely long lists */
+  /* unsigned int max_length = MAX_LENGTH; */
+  unsigned int max_length = (1 << 22); /* if AT_64BIT==0 */
   list[0] = ATmakeList0();
-  for (i=1; i<MAX_LENGTH+16; i++) {
+  for (i=1; i < max_length+16; i++) {
     list[0] = ATinsert(list[0], (ATerm)ATmakeInt(1));
     test_assert("long-list", i, ATgetLength(list[0]) == i);
   }
@@ -464,8 +464,10 @@ testRead(void)
 {
   ATerm t;
   FILE *f = fopen(SRCDIR "test.trms", "rb");
-  if(!f)
+  if(!f) {
+    printf("ERROR: in testRead, path is %s\n", SRCDIR "test.trms");
     ATerror("cannot open file \"test.trms\"");
+  }
 
   do {
     t = ATreadFromTextFile(f);
@@ -1316,7 +1318,7 @@ void testCompare()
   ATerm atanno = ATmake("f(a){[a,b],[b,d]}");
 
   char *data1 = "ik ben data";
-  ATerm atblob = (ATerm)ATmakeBlob(strlen(data1)+1, data1);
+  ATerm atblob = (ATerm)ATmakeBlob((unsigned int)(strlen(data1)+1), data1);
 
   /* appl biggers */
   ATerm atappl0 = ATmake("g(a)");
@@ -1360,12 +1362,12 @@ void testCompare()
   /* blob bigger */
   char *data2 = "ik ben ook data";
   char *data3 = "ik ben data ook";
-  ATerm atblob2 = (ATerm)ATmakeBlob(strlen(data2)+1, data2);
-  ATerm atblob3 = (ATerm)ATmakeBlob(strlen(data3)+1, data3);
+  ATerm atblob2 = (ATerm)ATmakeBlob((unsigned int)(strlen(data2)+1), data2);
+  ATerm atblob3 = (ATerm)ATmakeBlob((unsigned int)(strlen(data3)+1), data3);
 
   /* blob smaller */
   char *data4 = "ik ben bata";
-  ATerm atblob4 = (ATerm)ATmakeBlob(strlen(data4)+1, data4);
+  ATerm atblob4 = (ATerm)ATmakeBlob((unsigned int)(strlen(data4)+1), data4);
 
   test_assert("modulo", 0,  ATisEqualModuloAnnotations(atanno, atappl));
   test_assert("modulo", 1,  ATisEqualModuloAnnotations(atappl, atappl));
@@ -1442,6 +1444,9 @@ int main(int argc, char *argv[])
 
   ATinit(argc, argv, &bottomOfStack);
 
+  /* TODO need config.h so that AT_64BIT is defined in user code */
+  printf("sizeof(header_type)=%ld sizeof(ATerm *)=%ld AT_64BIT=%d \n", sizeof(header_type), sizeof(ATerm), AT_64BIT);
+
   testAlloc();
   testSymbol();
   testAppl();
@@ -1451,22 +1456,22 @@ int main(int argc, char *argv[])
   testRead();
   testDict();
   testPrintf();
-  testAnno();
+  testAnno();         /* has issues */
   testMake();
   testTuple();
   testMatch();
   testBaffle();
   testTaf();
-  testGC();
-  testProtect();
+  testGC();          /* has issues */
+  testProtect();     /* has issues */
   testMark();
 #ifndef NO_SHARING
-  testTable();
-  testIndexedSet();
+  testTable();       /* has issues */
+  testIndexedSet();  /* has issues */
 #endif
-  testDictToC();
+  testDictToC();     /* has issues */
   testTBLegacy();
-  testChecksum();
+  testChecksum();    /* has issues */
 #ifndef NO_SHARING
   testDiff();
 #endif

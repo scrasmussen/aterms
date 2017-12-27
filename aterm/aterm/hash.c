@@ -16,14 +16,15 @@
 /*}}}  */
 /*{{{  includes */
 
-#include "aterm2.h"
-#include "_aterm.h"
-#include "util.h"
-#include "memory.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+
+#include "aterm2.h"
+#include "_aterm.h"
+#include "util.h"
+#include "memory.h"
 
 /*}}}  */
 /*{{{  defines */
@@ -82,51 +83,31 @@ struct _ATermTable
 
 static long approximatepowerof2(long n)
 {
-  int mask = n;
+  long mask = n;
 
-  while(mask >>= 1) {
+  while (mask >>= 1) {
     n |= mask;
   }
 
-  if (n<127) n=127;
+  if (n < 127) {
+    n = 127;
+  }
+
   return n;
 }
 
-/*}}}  */
-/*{{{  static long calc_long_max() */
-static long calc_long_max()
-{
-    long long_max = 0;
-    int i = 0;
-    for ( ; i < ( sizeof(long)*8 - 1); ++i) {
-	long_max = ( long_max << 1 ) + 1 ;
-    }
-    return long_max;
-}
 /*}}}  */
 /*{{{  static long calculateNewSize(sizeMinus1, nrdel, nrentries) */
 
 static long calculateNewSize
 (long sizeMinus1, long nr_deletions, long nr_entries)
 { 
-
-  /* Hack: LONG_MAX (limits.h) is often unreliable, we need to find
-   * out the maximum possible value of a signed long dynamically.
-   */
-  static long st_long_max = 0;
-
-  /* the resulting length has the form 2^k-1 */
-
   if (nr_deletions >= nr_entries/2) { 
     return sizeMinus1;
   }
 
-  if (st_long_max == 0) {
-    st_long_max = calc_long_max();
-  }
-
-  if (sizeMinus1 > st_long_max / 2) {
-    return st_long_max-1;
+  if (sizeMinus1 > LONG_MAX / 2) {
+    return LONG_MAX-1;
   }
 
   return (2*sizeMinus1)+1;
@@ -691,3 +672,12 @@ ATermList  ATtableValues(ATermTable table)
 }
 
 /*}}}  */
+
+
+/**
+ * Function for testing approximatepowerof2 static function
+ */
+long AT_approximatepowerof2(long n)
+{
+   return approximatepowerof2(n);
+}

@@ -57,8 +57,8 @@ typedef struct _ATermMapping{
 
 typedef struct _BinaryWriter{
 	ATermMapping *stack;
-	int stackSize;
-	int stackPosition;
+	size_t    stackSize;
+	ptrdiff_t stackPosition;
 	
 	IDMappings sharedTerms;
 	int currentSharedTermKey;
@@ -67,8 +67,8 @@ typedef struct _BinaryWriter{
 	int currentSharedSymbolKey;
 	
 	ATerm currentTerm;
-	unsigned int indexInTerm;
-	unsigned int totalBytesInTerm;
+	ptrdiff_t indexInTerm;
+	size_t    totalBytesInTerm;
 } *BinaryWriter;
 
 BinaryWriter ATcreateBinaryWriter(ATerm term);

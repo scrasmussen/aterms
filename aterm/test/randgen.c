@@ -29,7 +29,7 @@
 
 static int nr_symbols = 5;
 static int nr_terms   = 100;
-static int open;
+static int nopen;
 static int term_count;
 static int magic_perc = 40;
 
@@ -48,7 +48,7 @@ ATerm genterm(ATerm t)
   int i, arity, index, maxarity, todo;
   static int next_leave = 0;
 
-  maxarity = nr_terms-(term_count+open);
+  maxarity = nr_terms - (term_count + nopen);
   if(nr_symbols < maxarity)
     maxarity = nr_symbols;
 
@@ -78,7 +78,7 @@ ATerm genterm(ATerm t)
     todo = arity-1;
   else
     todo = arity;
-  open += todo;
+  nopen += todo;
 
 
   for(i=0; i<todo; i++) {
@@ -86,7 +86,7 @@ ATerm genterm(ATerm t)
       index = lrand48() % arity;
     } while(args[index] != NULL);
 
-    if((term_count+open+1) < nr_terms && ((lrand48()%100) < magic_perc)) {
+    if((term_count + nopen + 1) < nr_terms && ((lrand48()%100) < magic_perc)) {
       args[index] = genterm(NULL);
     } 
     else {
@@ -96,7 +96,7 @@ ATerm genterm(ATerm t)
 	args[index] = (ATerm)ATmakeAppl0(symbols[0]);
       term_count++;
     }
-    open--;
+    nopen--;
   }
   term_count++;
   
@@ -128,7 +128,7 @@ ATerm randgen()
     ATprotectSymbol(symbols[i]);
   }
 
-  open = 0;
+  nopen = 0;
   while(term_count < nr_terms)
     t = genterm(t);
 

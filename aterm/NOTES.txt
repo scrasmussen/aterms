@@ -1,0 +1,30 @@
+2016.12.15
+----------
+
+## macro variables
+#
+# These can be set by configure apparently.  Many are not used by the ATerm library.
+#
+-DAT_64BIT=0 -DNDEBUG -DPACKAGE=\"aterm\" -DVERSION=\"2.8\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DHAVE_STRDUP=1 -DHAVE_LRAND48=1 -DHAVE_SRAND48=1
+
+## unused
+#
+-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DHAVE_STRDUP=1 -DHAVE_LRAND48=1 -DHAVE_SRAND48=1
+
+## used
+#
+AT_64BIT             # controls some form of 64 bit stuff (probably needed, but table size > sizeof(unsigned int))
+                       # don't believe this should be set for now as I think it only allows for large table sizes
+                       # so need to understand and test
+NDEBUG               # turns off debugging (don't for now)
+PACKAGE              # not really used but keep
+VERSION              # not really used but keep
+
+## could be used by grepping #if (but not set)
+#
+SEMI_DEEP_EQUALITY   # controls whether ATisEqual is a semi-deep equality
+DEEP_EQUALITY        # controls whether ATisEqual is a deep equality
+PROTOTYPES           # comment says should be set to unless defined by compiler flags (default changed from 0 to 1, compilers support prototypes)
+MIN                  # simple macro for minimum
+MAX                  # simple macro for maximum
+WITH_STATS           # this very much is used (probably for collecting usage information)

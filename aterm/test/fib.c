@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define AT_64BIT 1
+
 #include <aterm1.h>
 #include <aterm2.h>
 #include <assert.h>
@@ -23,8 +25,8 @@ static AFun f_plus;
 static AFun f_fib;
 
 
-#define zero() ((ATerm)ATmakeAppl0(f_zero))
-#define suc(x) ((ATerm)ATmakeAppl1(f_suc, x))
+#define zero()   ((ATerm)ATmakeAppl0(f_zero))
+#define suc(x)   ((ATerm)ATmakeAppl1(f_suc, x))
 #define mkfib(x) ((ATerm)ATmakeAppl1(f_fib, x))
 
 void error(char *ss) {
@@ -176,8 +178,7 @@ ATerm normalizeFib(ATerm t) {
           break;
         }
       }
-        /*  fib(s(s(x))) => plus(fib(x),fib(s(x)))
-               v0 v1 */
+        /* fib(s(s(x))) => plus(fib(x),fib(s(x))) v0 v1 */
       if(ATgetAFun(v0) == f_suc) {
         v1 = ATgetArgument(v0,0);
         if(ATgetAFun(v1) == f_suc) {
@@ -229,35 +230,37 @@ int nfib(int n) {
 
 int mmain() {
   ATerm res;
-  ATerm query ;
-  int i,n;
+  ATerm query;
+  int i, n;
   
   f_zero = ATmakeAFun("zero", 0, ATfalse);
-  f_suc  = ATmakeAFun("suc", 1, ATfalse);
-  f_fib  = ATmakeAFun("fib", 1, ATfalse);
-  f_plus  = ATmakeAFun("plus", 2, ATfalse);
+  f_suc  = ATmakeAFun("suc",  1, ATfalse);
+  f_fib  = ATmakeAFun("fib",  1, ATfalse);
+  f_plus = ATmakeAFun("plus", 2, ATfalse);
 
   ATprotectAFun(f_zero);
   ATprotectAFun(f_suc);
   ATprotectAFun(f_fib);
   ATprotectAFun(f_plus);
 
-    /* printf("enter n: "); scanf("%d",&n); */
+  /* printf("enter n: "); scanf("%d",&n); */
   n = 32;
-    /* construct the term representation of the n value */
+
+  /* construct the term representation of the n value */
   query = zero();
   for(i=0;i<n;i++) {
     query = suc(query);
   }
-    /*  write the original number and its 'fib' */
+
+  /*  write the original number and its 'fib' */
+  res = zero(); /* initialize to prevent warning message */
   for(i=0; i<1; i++) {
-      /* res = fib(query); */
+    /* res = fib(query); */
     res = normalizeFib(mkfib(query));
   }
-    /* ATprintf("fib(%t) == %t\n", query, res) ; */
-    printf("fib(%d) == %d\n", suc2int(query), suc2int(res)) ;
 
-
+  /* ATprintf("fib(%t) == %t\n", query, res); */
+  printf("fib(%d) == %d\n", suc2int(query), suc2int(res));
   
   return 0;
 }

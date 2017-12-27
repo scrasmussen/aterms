@@ -41,7 +41,7 @@ union DoubleEncoding{
 #define SIGNBIT 0x80U
 
 #if SIZEOF_INT != 4 && SIZEOF_INT != 8
-#  warning "Detected an integer size other then 4 or 8 bytes, this can lead to undefined behaviour when reading / writing SAF."
+  "WARNING: Detected an integer size other then 4 or 8 bytes, this can lead to undefined behaviour when reading / writing SAF."
 #endif
 
 /**

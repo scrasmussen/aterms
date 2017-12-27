@@ -33,15 +33,16 @@ void AT_markTerm_young(ATerm t);
 void AT_unmarkTerm(ATerm t);
 void AT_unmarkIfAllMarked(ATerm t);
 void AT_unmarkAll();
-unsigned long  AT_calcTextSize(ATerm t);
-unsigned long  AT_calcCoreSize(ATerm t);
-unsigned long  AT_calcSubterms(ATerm t);
-unsigned long  AT_calcUniqueSubterms(ATerm t);
-unsigned long  AT_calcUniqueSymbols(ATerm t);
-unsigned long  AT_calcTermDepth(ATerm t);
-void AT_assertUnmarked(ATerm t);
-void AT_assertMarked(ATerm t);
-unsigned long AT_calcAllocatedSize();
+
+size_t AT_calcTextSize(ATerm t);
+size_t AT_calcCoreSize(ATerm t);
+size_t AT_calcSubterms(ATerm t);
+size_t AT_calcUniqueSubterms(ATerm t);
+size_t AT_calcUniqueSymbols(ATerm t);
+size_t AT_calcTermDepth(ATerm t);
+void   AT_assertUnmarked(ATerm t);
+void   AT_assertMarked(ATerm t);
+size_t AT_calcAllocatedSize();
 
 #ifdef __cplusplus
 }

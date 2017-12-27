@@ -5,8 +5,6 @@
 
 #include "aterm2.h"
 
-char primes_id[] = "$Id$";
-
 /*{{{  ATermList generate_numbers(int max) */
 
 ATermList generate_numbers(int max)

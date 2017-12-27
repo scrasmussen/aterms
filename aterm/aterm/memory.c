@@ -59,10 +59,49 @@
   assert((t) != NULL \
          && (!at_check || (AT_isValidTerm(t) && "term is invalid")))
 
-/*}}}  */
-/*{{{  globals */
+/*}}} */
+/*{{{  static ptrdiff_t fold_func(ptrdiff_t w) */
 
-char memory_id[] = "$Id$";
+/**
+ * function for testing FOLD
+ */
+static ptrdiff_t fold_func(ptrdiff_t w)
+{
+   ptrdiff_t f1, f2, fold;
+   f1 = HN(w);
+#if AT_64BIT == 1
+   f2 = HN(w) >> 32;
+   fold = (f1 ^ f2);
+#elif AT_64BIT == 0
+   fold = f1;
+#else
+"ERROR: AT_64BIT not defined"
+#endif
+   return fold;
+}
+
+/*}}} */
+/*{{{  static ptrdiff_t start_func(ptrdiff_t w) */
+
+/**
+ * function for testing START
+ */
+static ptrdiff_t start_func(ptrdiff_t w)
+{
+   ptrdiff_t mask_mark, mask_age, mask_age_mark, hide_age_mark, start;
+
+   mask_age      = (1<<0) | (1<<1);
+   mask_mark     = (1<<2);
+   mask_age_mark = (mask_age | mask_mark);
+   hide_age_mark = (w & ~mask_age_mark);
+
+   start = fold_func(hide_age_mark);
+   return start;
+}
+
+/*}}}  */
+
+/*{{{  globals */
 
 unsigned int maxTermSize = INITIAL_MAX_TERM_SIZE;
 
@@ -908,14 +947,14 @@ void AT_freeTerm(unsigned int size, ATerm t)
 
   terminfo[size].nb_reclaimed_cells_during_last_gc++;
   
-    /*fprintf(stderr,"AT_freeTerm term[%d] = %x\theader = %x\n",size,(unsigned int)t,t->header);*/
+    /*fprintf(stderr,"AT_freeTerm term[%d] = %lx\theader = %lx\n",size,(size_t)t,t->header);*/
   
     /* The data of a blob needs to be freed!!! */
   if (ATgetType(t) == AT_BLOB) {
     ATbool destructed = ATfalse;
       /*ATfprintf(stderr, "freeing blob %p (%p): %t\n", t, ATgetBlobData((ATermBlob)t), t);*/
     for (i=0; i<destructor_count; i++) {
-        /*fprintf(stderr,"apply destructors[%d] on (%d)\n",i,t);*/
+        /*fprintf(stderr,"apply destructors[%d] on (%ld)\n",i,(size_t)t);*/
       if ((destructors[i])((ATermBlob)t)) {
         destructed = ATtrue;
         break;
@@ -923,7 +962,7 @@ void AT_freeTerm(unsigned int size, ATerm t)
     }
       /*printf("destructed = %d\n",destructed);*/
     if (!destructed) {
-        /*printf("free BlobData(%d)\n",ATgetBlobData((ATermBlob)t));*/
+        /*printf("free BlobData(%p)\n",ATgetBlobData((ATermBlob)t));*/
       AT_free(ATgetBlobData((ATermBlob)t));
     }
   }
@@ -934,8 +973,8 @@ void AT_freeTerm(unsigned int size, ATerm t)
 
   do {
     if(!cur) {
-        /*printf("freeterm = %d\n",t);*/
-      /*fprintf(stderr,"### cannot find term %x in hashtable at pos %d header = %x\n", (unsigned int)(intptr_t)t, (int)hnr, (unsigned int)t->header);*/
+      fprintf(stderr,"freeterm = %p, table_size = %ld, table_class = %d\n", t, table_size, table_class);
+      fprintf(stderr,"### cannot find term %ld %lx in hashtable at pos %ld header = %lx\n", (long)t, (size_t)t, hnr, t->header);
 
       ATabort("AT_freeTerm: cannot find term %n at %p in hashtable at pos %d"
               ", header = 0x%x\n", t, t, hnr, t->header);
@@ -2218,7 +2257,7 @@ ATbool AT_isValidTerm(ATerm term)
   ATbool inblock = ATfalse;
   int idx = ADDR_TO_BLOCK_IDX(term);
   int type;
-  int offset = 0;
+  ptrdiff_t offset = 0;
 
   assert(block_table[idx].first_after == block_table[(idx+1)%BLOCK_TABLE_SIZE].first_before);
   
@@ -2227,7 +2266,7 @@ ATbool AT_isValidTerm(ATerm term)
     if(cur->size) {
       assert(cur->next_before == cur->next_after);
       offset  = ((char *)term) - ((char *)&cur->data);
-      if (offset >= 0        && offset < (int)(BLOCK_SIZE * sizeof(header_type))) {
+      if (offset >= 0 && offset < (int)(BLOCK_SIZE * sizeof(header_type))) {
         inblock = ATtrue;
         break;
       }
@@ -2432,7 +2471,7 @@ static int compare_afuns(const void *l, const void *r)
 
 void AT_printAllAFunCounts(FILE *file)
 {
-  unsigned int i, nr_syms;
+  size_t i, nr_syms;
   AFun *afuns;
 
   nr_syms = AT_symbolTableSize();
@@ -2473,20 +2512,21 @@ void AT_printAllAFunCounts(FILE *file)
 }
 
 /*}}}  */
-/*{{{  int AT_calcAllocatedBytes() */
+/*{{{  size_t AT_calcAllocatedBytes() */
 
 
 /**
  * Calculate all allocated bytes containing ATerms.
  */
 
-unsigned long AT_calcAllocatedSize()
+size_t AT_calcAllocatedSize()
 {
   unsigned int i;
-  unsigned long total = 0;
+  size_t total = 0L;
 
-  for(i=0; i<maxTermSize; i++)
+  for(i=0; i<maxTermSize; i++) {
     total += terminfo[i].at_nrblocks*sizeof(Block);
+  }
 
   total += table_size*sizeof(ATerm);
 

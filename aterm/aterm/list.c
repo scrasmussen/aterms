@@ -17,8 +17,6 @@
 /*}}}  */
 /*{{{  variables */
 
-char list_id[] = "$Id$";
-
 /*}}}  */
 
 /*{{{  void AT_initList(int argc, char *argv[]) */

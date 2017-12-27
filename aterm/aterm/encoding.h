@@ -18,11 +18,11 @@ extern "C"
   31   9 8 7 6 5 4   3     2   1 0
 */
 
-#define	MASK_QUOTED	(1<<3)
-#define	MASK_ANNO	MASK_QUOTED
-#define MASK_MARK	(1<<2)
-#define MASK_ARITY	((1<<4) | (1<<5) | (1<<6))
-#define MASK_TYPE	((1<<7) | (1<<8) | (1<<9))
+#define MASK_QUOTED     (1<<3)
+#define MASK_ANNO       MASK_QUOTED
+#define MASK_MARK       (1<<2)
+#define MASK_ARITY      ((1<<4) | (1<<5) | (1<<6))
+#define MASK_TYPE       ((1<<7) | (1<<8) | (1<<9))
 #define MASK_AGE        ((1<<0) | (1<<1))
 
 #define SHIFT_ARITY   4
@@ -32,18 +32,23 @@ extern "C"
 #define SHIFT_REMOVE_MARK_AGE 3
 #define MASK_AGE_MARK   (MASK_AGE|MASK_MARK)
 
-#if AT_64BIT
+#if AT_64BIT == 1
 #define SHIFT_LENGTH  34
-#define HEADER_BITS 64
+#define HEADER_BITS   64
 typedef unsigned long header_type;
-#else
+#elif AT_64BIT == 0
 #define SHIFT_LENGTH  10
-#define HEADER_BITS 32
+#define HEADER_BITS   32
 typedef unsigned int header_type;
+#else
+"ERROR: AT_64BIT is undefined"
 #endif /* AT_64BIT */
 
+/* assumes 32 bit integers (used in bafio.c) */
+#define INTEGER_BITS   32
+
 #define LENGTH_BITS (HEADER_BITS - SHIFT_LENGTH)
-#define MAX_LENGTH (1 << LENGTH_BITS)
+#define MAX_LENGTH  (1 << LENGTH_BITS)
 
 #define GET_AGE(h)     ((unsigned int)(((h) & MASK_AGE) >> SHIFT_AGE))
 #define SET_AGE(h, a)  ((h) = (((h) & ~MASK_AGE) | (((a) << SHIFT_AGE) & MASK_AGE)))
@@ -61,7 +66,7 @@ typedef unsigned int header_type;
 /* #define EQUAL_HEADER(h1,h2) (HIDE_AGE_MARK(h1)==HIDE_AGE_MARK(h2)) */
 #define EQUAL_HEADER(h1,h2) (HIDE_AGE_MARK(h1^h2) == 0)
 
-#define SHIFT_SYMBOL  SHIFT_LENGTH
+#define SHIFT_SYMBOL    SHIFT_LENGTH
 #define SHIFT_SYM_ARITY SHIFT_LENGTH
 
 #define TERM_SIZE_APPL(arity) ((sizeof(struct __ATerm)/sizeof(header_type))+arity)
@@ -75,50 +80,50 @@ typedef unsigned int header_type;
 #define IS_MARKED(h)    ((h) & MASK_MARK)
 #define GET_TYPE(h)     (((h) & MASK_TYPE) >> SHIFT_TYPE)
 #define HAS_ANNO(h)     ((h) & MASK_ANNO)
-#define GET_ARITY(h)	((unsigned int)(((h) & MASK_ARITY) >> SHIFT_ARITY))
-#define GET_SYMBOL(h)	((Symbol) ((h) >> SHIFT_SYMBOL))
-#define GET_LENGTH(h)	((h) >> SHIFT_LENGTH)
-#define IS_QUOTED(h)	(((h) & MASK_QUOTED) ? ATtrue : ATfalse)
+#define GET_ARITY(h)    ((unsigned int)(((h) & MASK_ARITY) >> SHIFT_ARITY))
+#define GET_SYMBOL(h)   ((Symbol) ((h) >> SHIFT_SYMBOL))
+#define GET_LENGTH(h)   ((h) >> SHIFT_LENGTH)
+#define IS_QUOTED(h)    (((h) & MASK_QUOTED) ? ATtrue : ATfalse)
 
 #define SET_MARK(h)     ((h) |= MASK_MARK)
 #define SET_ANNO(h)     ((h) |= MASK_ANNO)
 /* #define SET_ARITY(h, ar) ((h) = (((h) & ~MASK_ARITY) | \
-									((ar) << SHIFT_ARITY)))
+                                                                        ((ar) << SHIFT_ARITY)))
 */
-#define SET_SYMBOL(h, sym)	((h) = (((h) & ~MASK_SYMBOL) | \
-									((sym) << SHIFT_SYMBOL)))
+#define SET_SYMBOL(h, sym)      ((h) = (((h) & ~MASK_SYMBOL) | \
+                                                                        ((sym) << SHIFT_SYMBOL)))
 #define SET_LENGTH(h, len)  ((h) = (((h) & ~MASK_LENGTH) | \
-									((len) << SHIFT_LENGTH)))
-#define SET_QUOTED(h)		((h) |= MASK_QUOTED)
+                                                                        ((len) << SHIFT_LENGTH)))
+#define SET_QUOTED(h)           ((h) |= MASK_QUOTED)
 
-#define CLR_MARK(h)			((h) &= ~MASK_MARK)
-#define CLR_ANNO(h)			((h) &= ~MASK_ANNO)
-#define CLR_QUOTED(h)		((h) &= ~MASK_QUOTED)
+#define CLR_MARK(h)                     ((h) &= ~MASK_MARK)
+#define CLR_ANNO(h)                     ((h) &= ~MASK_ANNO)
+#define CLR_QUOTED(h)           ((h) &= ~MASK_QUOTED)
 
 #define APPL_HEADER(anno,ari,sym) ((anno) | ((ari) << SHIFT_ARITY) | \
-				   (AT_APPL << SHIFT_TYPE) | \
-				   ((header_type)(sym) << SHIFT_SYMBOL))
+                                   (AT_APPL << SHIFT_TYPE) | \
+                                   ((header_type)(sym) << SHIFT_SYMBOL))
 #define INT_HEADER(anno)          ((anno) | AT_INT << SHIFT_TYPE)
 #define REAL_HEADER(anno)         ((anno) | AT_REAL << SHIFT_TYPE)
 #define EMPTY_HEADER(anno)        ((anno) | AT_LIST << SHIFT_TYPE)
 
 #define LIST_HEADER(anno,len)     ((anno) | (AT_LIST << SHIFT_TYPE) | \
-				   ((MachineWord)(len) << SHIFT_LENGTH) | (2 << SHIFT_ARITY))
+                                   ((MachineWord)(len) << SHIFT_LENGTH) | (2 << SHIFT_ARITY))
 
 #define PLACEHOLDER_HEADER(anno)  ((anno) | (AT_PLACEHOLDER << SHIFT_TYPE) | \
            1 << SHIFT_ARITY)
 
 /*
 #define BLOB_HEADER(anno,len)     ((anno) | (AT_BLOB << SHIFT_TYPE) | \
-				   ((MachineWord)(len) << SHIFT_LENGTH))
-				   */
-#define BLOB_HEADER(anno)	  ((anno) | (AT_BLOB << SHIFT_TYPE) | \
-				   (2 << SHIFT_ARITY))
+                                   ((MachineWord)(len) << SHIFT_LENGTH))
+                                   */
+#define BLOB_HEADER(anno)         ((anno) | (AT_BLOB << SHIFT_TYPE) | \
+                                   (2 << SHIFT_ARITY))
 
 #define SYMBOL_HEADER(arity,quoted) \
-	(((quoted) ? MASK_QUOTED : 0) | \
-	 ((MachineWord)(arity) << SHIFT_SYM_ARITY) | \
-	 (AT_SYMBOL << SHIFT_TYPE))
+        (((quoted) ? MASK_QUOTED : 0) | \
+         ((MachineWord)(arity) << SHIFT_SYM_ARITY) | \
+         (AT_SYMBOL << SHIFT_TYPE))
 
 #define FREE_HEADER               (AT_FREE << SHIFT_TYPE)
 

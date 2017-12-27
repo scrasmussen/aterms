@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
 
 #include "tafio.h"
@@ -115,18 +116,18 @@ static long write_abbrev(long abbrev, byte_writer *writer)
 
 /*}}}  */
 
-/*{{{  static int writeToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet abbrevs) */
+/*{{{  static long writeToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet abbrevs) */
 
 /**
   * Write a term in text format to file.
   */
 
-static int writeToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet abbrevs)
+static long writeToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet abbrevs)
 {
   Symbol          sym;
   ATerm           arg;
-  int             i, arity, elem_size, blob_size;
-  long            size;
+  int             i, arity, blob_size;
+  long            elem_size, size;
   ATermAppl       appl;
   ATermList       list;
   ATermBlob       blob;
@@ -279,7 +280,7 @@ static int writeToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet a
 static long topWriteToSharedTextFile(ATerm t, byte_writer *writer, ATermIndexedSet abbrevs)
 {
   ATerm annos;
-  long abbrev, size = 0, anno_size;
+  long abbrev, anno_size, size = 0;
 
   abbrev = ATindexedSetGetIndex(abbrevs, t);
   if (abbrev >= 0) {
@@ -368,7 +369,7 @@ char *ATwriteToSharedString(ATerm t, int *len)
   static ATbool initialized = ATfalse;
 
   ATermIndexedSet abbrevs;
-  int length;
+  long length;
 
   next_abbrev = 0;
   abbrevs = ATindexedSetCreate(1024, 75);
@@ -396,7 +397,8 @@ char *ATwriteToSharedString(ATerm t, int *len)
   writer.u.string_data.buf[length] = '\0';
 
   if (len != NULL) {
-    *len = length;
+    assert(length <= INT_MAX);
+    *len = (int) length;
   }
 
   ATindexedSetDestroy(abbrevs);
@@ -540,7 +542,9 @@ static ATerm rparse_blob(int *c, byte_reader *reader)
 
   rnext_skip_layout(c, reader);
 
-  return (ATerm)ATmakeBlob(len, data);
+  assert(len <= UINT_MAX);
+
+  return (ATerm) ATmakeBlob((unsigned int) len, data);
 }
 
 /*}}}  */

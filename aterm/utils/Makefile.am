@@ -1,5 +1,3 @@
-# $Id$
-
 EXTRA_DIST       = $(bin_SCRIPTS) 
 
 AM_CPPFLAGS      = -I$(top_srcdir)/aterm

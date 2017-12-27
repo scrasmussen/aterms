@@ -10,7 +10,7 @@ extern "C"
 {
 #endif/* __cplusplus */
 
-int AT_writeAFun(AFun fun, byte_writer *writer);
+size_t AT_writeAFun(AFun fun, byte_writer *writer);
 
 #ifdef __cplusplus
 }

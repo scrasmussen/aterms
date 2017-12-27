@@ -1,0 +1,5 @@
+libATerm_la-md5c.lo: md5c.c /usr/include/stdc-predef.h md5.h
+
+/usr/include/stdc-predef.h:
+
+md5.h:

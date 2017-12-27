@@ -1,0 +1,62 @@
+## differences between 64-bit-fixes and master
+#
+
+FILES                         DIFFERENCES      NOTES
+-----                         -----------      -----
+
+_afun.h                          no
+_aterm.h                         no
+abool.h                          no
+afun.c                           no
+afun.h                           yes           (CER) AT_isValidSymbol (unsigned int) -> (size_t) fixes table lookup
+aterm.c                          no
+aterm1.h                         no
+aterm2.h                         no
+atypes.h                         no
+bafio.c                          no
+bafio.h                          no
+byteencoding.c                   no
+byteencoding.h                   no
+byteio.c                         no
+byteio.h                         no
+debug.h                          no
+deprecated.h                     no
+encoding.h                       no
+gc.c                             no
+gc.h                             no
+hash.c                           no
+idmappings.c                     no
+idmappings.h                     no
+list.c                           no
+list.h                           no
+make.c                           no
+make.h                           no
+md5.h                            no
+md5c.c                           no
+memmgnt.c                        no
+memory.c                         no
+memory.h                         no
+safio.c                          no
+safio.h                          no
+tafio.c                          no
+tafio.h                          no
+util.h                           no
+version.c                        no
+version.h                        no
+
+
+2017.01.26
+----------
+
+Unfortunately I copied hash.c from the v2.8 64-bit patch to master, this branch
+
+## making aterm-2.8.2 release for Livermore
+#
+
+- starting at aterm-2.8.1 I did the following
+  - this is just renamed from aterm-2.8 (as I recall) to keep track of library installs
+
+1. Copied aterm.c - has extra warning messages on failure to open files
+2. Copied byteencoding.c - has changes for (SIZEOF_INT == 8), NOTE: need to check if this is set
+3. Copied gc.c - has #ifdef AT_64BIT
+4. Copied idmappings.h - has #ifndef IDMAPPINGS_H_ fixed (was HASHTABLE_H_)

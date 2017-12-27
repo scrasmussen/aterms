@@ -2,6 +2,8 @@
 #include "byteencoding.h"
 #include "memory.h"
 #include "encoding.h"
+#include <assert.h>
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -265,8 +267,8 @@ void ATdestroyByteBuffer(ByteBuffer byteBuffer){
  * Writes the given integer to the byte buffer.
  * The encoding will be done in 'byteenconding.c'.
  */
-inline static void writeInt(int value, ByteBuffer byteBuffer){
-	byteBuffer->currentPos += BEserializeMultiByteInt(value, byteBuffer->currentPos);
+inline static void writeInt(int value, ByteBuffer byteBuffer) {
+   byteBuffer->currentPos += BEserializeMultiByteInt(value, byteBuffer->currentPos);
 }
 
 /**
@@ -406,9 +408,8 @@ static void visitAppl(BinaryWriter binaryWriter, ATermAppl arg, ByteBuffer byteB
 			char* name = ATgetName(fun);
 			unsigned int isQuoted = ATisQuoted(fun);
 			unsigned int arity = ATgetArity(fun);
-			unsigned int nameLength = strlen(name);
-			
-			unsigned int bytesToWrite = nameLength;
+			size_t nameLength = strlen(name);
+			size_t bytesToWrite = nameLength;
 			
 			if(isQuoted) header |= APPLQUOTED;
 			*(byteBuffer->currentPos) = (char) header;
@@ -416,7 +417,8 @@ static void visitAppl(BinaryWriter binaryWriter, ATermAppl arg, ByteBuffer byteB
 			
 			writeInt(arity, byteBuffer);
 			
-			writeInt(nameLength, byteBuffer);
+                        assert(nameLength <= INT_MAX);
+			writeInt((int)nameLength, byteBuffer);
 			
 			remaining = ATgetRemainingBufferSpace(byteBuffer);
 			if(remaining < bytesToWrite){
@@ -434,10 +436,10 @@ static void visitAppl(BinaryWriter binaryWriter, ATermAppl arg, ByteBuffer byteB
 		}
 	}else{
 		char* name = ATgetName(fun);
-		unsigned int length = binaryWriter->totalBytesInTerm;
+		size_t length = binaryWriter->totalBytesInTerm;
 		
-		unsigned int bytesToWrite = length - binaryWriter->indexInTerm;
-		unsigned int remaining = ATgetRemainingBufferSpace(byteBuffer);
+		size_t bytesToWrite = length - binaryWriter->indexInTerm;
+		size_t remaining = ATgetRemainingBufferSpace(byteBuffer);
 		if(remaining < bytesToWrite) bytesToWrite = remaining;
 		
 		memcpy(byteBuffer->currentPos, (name + binaryWriter->indexInTerm), bytesToWrite);
@@ -452,18 +454,19 @@ static void visitAppl(BinaryWriter binaryWriter, ATermAppl arg, ByteBuffer byteB
  * Serializes the given ATermBlob.
  */
 static void visitBlob(BinaryWriter binaryWriter, ATermBlob arg, ByteBuffer byteBuffer){
-	unsigned int remaining;
+	size_t remaining;
 	
-	unsigned int size = ATgetBlobSize(arg);
+	size_t size = ATgetBlobSize(arg);
 	char *blobBytes = ATgetBlobData(arg);
 	
-	unsigned int bytesToWrite = size - binaryWriter->indexInTerm;
+	size_t bytesToWrite = size - binaryWriter->indexInTerm;
 	
 	if(binaryWriter->indexInTerm == 0){
 		*(byteBuffer->currentPos) = (char) getHeader((ATerm) arg);
 		byteBuffer->currentPos++;
 		
-		writeInt(size, byteBuffer);
+                assert(size <= UINT_MAX);
+		writeInt((int)size, byteBuffer);
 	}
 	
 	remaining = ATgetRemainingBufferSpace(byteBuffer);
@@ -1205,7 +1208,7 @@ ATbool ATwriteToSAFFile(ATerm aTerm, FILE *file){
 	}
 #endif
 
-	int bytesWritten = fwrite("?", sizeof(char), 1, file);
+	size_t bytesWritten = fwrite("?", sizeof(char), 1, file);
 	if(bytesWritten != 1){
 		ATwarning("Unable to write SAF identifier token to file.\n");
 		return ATfalse;
@@ -1295,8 +1298,8 @@ ATerm ATreadFromSAFFile(FILE *file){
 #endif
 	
 	char buffer[1];
-	unsigned int bytesRead = fread(buffer, sizeof(char), 1, file); /* Consume the first character in the stream. */
-	if(bytesRead <= 0){
+	size_t bytesRead = fread(buffer, sizeof(char), 1, file); /* Consume the first character in the stream. */
+	if (bytesRead < sizeof(char)) {
 		ATwarning("Unable to read SAF id token from file.\n");
 		return NULL;
 	}
@@ -1306,13 +1309,13 @@ ATerm ATreadFromSAFFile(FILE *file){
 	binaryReader = ATcreateBinaryReader();
 	byteBuffer = ATcreateByteBuffer(65536);
 	
-	do{
+	do {
 		int blockSize;
 		char sizeBytes[2];
 		
 		bytesRead = fread(sizeBytes, sizeof(char), 2, file);
-		if(bytesRead <= 0) break;
-		else if(bytesRead != 2){
+		if (bytesRead == 0) break;
+		else if (bytesRead != 2) {
 			ATwarning("Unable to read block size bytes from file: %d.\n", bytesRead);
 			ATdestroyByteBuffer(byteBuffer);
 			ATdestroyBinaryReader(binaryReader);
@@ -1324,7 +1327,7 @@ ATerm ATreadFromSAFFile(FILE *file){
 		ATresetByteBuffer(byteBuffer);
 		byteBuffer->limit = blockSize;
 		bytesRead = fread(byteBuffer->buffer, sizeof(char), blockSize, file);
-		if(bytesRead != blockSize){
+		if (bytesRead != blockSize) {
 			ATwarning("Unable to read bytes from file.\n");
 			ATdestroyByteBuffer(byteBuffer);
 			ATdestroyBinaryReader(binaryReader);
@@ -1332,7 +1335,7 @@ ATerm ATreadFromSAFFile(FILE *file){
 		}
 		
 		ATdeserialize(binaryReader, byteBuffer);
-	}while(bytesRead > 0);
+	} while(bytesRead > 0);
 	
 	ATdestroyByteBuffer(byteBuffer);
 	

@@ -35,6 +35,7 @@ extern "C"
 #define STATS(array, value)
 #endif
 
+/* 2**31 - 1 */
 #define MYMAXINT 0x7FFFFFFF
 
 #ifdef __cplusplus

@@ -40,7 +40,7 @@ static ATerm *stackBot = NULL;
 
 static int     flags               = 0;
 
-int at_gc_count			   = 0;
+int at_gc_count                    = 0;
 static int     stack_depth[3]      = { 0, MYMAXINT, 0 };
 static int     reclaim_perc[3]     = { 0, MYMAXINT, 0 };
 extern int     mark_stats[3];
@@ -97,9 +97,9 @@ void AT_initGC(int argc, char *argv[], ATerm *bottomOfStack)
       flags |= (PRINT_GC_TIME | PRINT_GC_STATS);
     else if(strcmp(argv[i], "-at-help") == 0) {
       fprintf(stderr, "    %-20s: print non-intrusive gc information "
-	      "after execution\n", "-at-print-gc-time");
+              "after execution\n", "-at-print-gc-time");
       fprintf(stderr, "    %-20s: print elaborate gc information "
-	      "after execution\n", "-at-print-gc-info");
+              "after execution\n", "-at-print-gc-info");
     }
   }
 }
@@ -189,7 +189,7 @@ static void mark_memory_young(ATerm *start, ATerm *stop, ATbool check_term)
         }
       }
     } else if (AT_isValidSymbol((Symbol)*cur)) {
-        /*fprintf(stderr,"mark_memory_young: AT_markSymbol_young(%d)\n",(Symbol)*cur);*/
+        /* fprintf(stderr,"mark_memory_young: AT_markSymbol_young(%ld), stop-cur=%ld\n",(Symbol)*cur, stop-cur); */
       AT_markSymbol_young((Symbol)*cur);
         /*nb_cell_in_stack++;*/
     }
@@ -207,9 +207,9 @@ void ATmarkArray(ATerm *start, int size)
 {
   if ( at_mark_young == ATtrue )
   {
-	  mark_memory_young(start,start+size,ATfalse);
+          mark_memory_young(start,start+size,ATfalse);
   } else {
-	  mark_memory(start,start+size,ATfalse);
+          mark_memory(start,start+size,ATfalse);
   }
 }
 
@@ -219,16 +219,11 @@ void ATmarkArray(ATerm *start, int size)
 VOIDCDECL mark_phase()
 {
   int i, j;
-  int stack_size;
+  ptrdiff_t stack_size;
   ATerm *stackTop;
   ATerm *start, *stop;
   ProtEntry *prot;
   ATprotected_block pblock;
-
-#ifdef AT_64BIT
-  ATerm oddTerm;
-  AFun oddSym;
-#endif
 
 #ifdef WIN32
 
@@ -298,7 +293,7 @@ VOIDCDECL mark_phase()
   start = MIN(stackTop, stackBot);
   stop  = MAX(stackTop, stackBot);
 
-  stack_size = stop-start;
+  stack_size = stop - start;
   STATS(stack_depth, stack_size);
 
   mark_memory(start, stop, ATtrue);
@@ -308,8 +303,8 @@ VOIDCDECL mark_phase()
     ProtEntry *cur = at_prot_table[i];
     while(cur) {
       for(j=0; j<cur->size; j++) {
-	if(cur->start[j])
-	  AT_markTerm(cur->start[j]);
+        if(cur->start[j])
+          AT_markTerm(cur->start[j]);
       }
       cur = cur->next;
     }
@@ -344,16 +339,11 @@ VOIDCDECL mark_phase()
 VOIDCDECL mark_phase_young() 
 {
   int i, j;
-  int stack_size;
+  ptrdiff_t stack_size;
   ATerm *stackTop;
   ATerm *start, *stop;
   ProtEntry *prot;
   ATprotected_block pblock;
-
-#ifdef AT_64BIT
-  ATerm oddTerm;
-  AFun oddSym;
-#endif
 
 #ifdef WIN32
 
@@ -421,7 +411,7 @@ VOIDCDECL mark_phase_young()
   start = MIN(stackTop, stackBot);
   stop  = MAX(stackTop, stackBot);
 
-  stack_size = stop-start;
+  stack_size = stop - start;
   STATS(stack_depth, stack_size);
 
   mark_memory_young(start, stop, ATtrue);
@@ -431,8 +421,8 @@ VOIDCDECL mark_phase_young()
     ProtEntry *cur = at_prot_table[i];
     while(cur) {
       for(j=0; j<cur->size; j++) {
-	if(cur->start[j])
-	   AT_markTerm_young(cur->start[j]);
+        if(cur->start[j])
+           AT_markTerm_young(cur->start[j]);
       }
       cur = cur->next;
     }
@@ -536,7 +526,7 @@ static void reclaim_empty_block(unsigned int blocks, int size, Block *removed_bl
      * remove the block from terminfo[size].at_blocks[AT_BLOCK]
      *
      */
-    
+
 #ifdef GC_VERBOSE
   fprintf(stdout,"block %x is empty\n",(unsigned int)removed_block);
 #endif
@@ -635,7 +625,7 @@ static void promote_block_to_old(int size, Block *block, Block *prev_block)
 static void promote_block_to_young(int size, Block *block, Block *prev_block) 
 {
   TermInfo* ti = &terminfo[size];
-	
+
 #ifdef GC_VERBOSE
   printf("move block %x to young_blocks\n",(unsigned int)block);
 #endif
@@ -679,7 +669,7 @@ void check_unmarked_block(unsigned int blocks)
     while(block) {
       header_type *cur;
       for(cur=block->data ; cur<end ; cur+=size) {
-	ATerm t = (ATerm)cur;
+        ATerm t = (ATerm)cur;
 
         if(IS_MARKED(t->header)) {
 #ifdef GC_VERBOSE
@@ -728,21 +718,21 @@ void major_sweep_phase_old()
       int alive_in_block = 0;
       int dead_in_block  = 0;
       int free_in_block  = 0;
-      int capacity = ((block->end)-(block->data))/size;
+      ptrdiff_t capacity = ((block->end) - (block->data))/size;
       header_type *cur;
 
       assert(block->size == size);
 
       for(cur=block->data ; cur<block->end ; cur+=size) {
           /* TODO: Optimisation*/
-	ATerm t = (ATerm)cur;
-	if(IS_MARKED(t->header)) {
-	  CLR_MARK(t->header);
+        ATerm t = (ATerm)cur;
+        if(IS_MARKED(t->header)) {
+          CLR_MARK(t->header);
           alive_in_block++;
           empty = 0;
           assert(IS_OLD(t->header));
-	} else {
-	  switch(ATgetType(t)) {
+        } else {
+          switch(ATgetType(t)) {
               case AT_FREE:
                 assert(IS_YOUNG(t->header));
                 free_in_block++;
@@ -766,8 +756,8 @@ void major_sweep_phase_old()
                 break;
               default:
                 ATabort("panic in sweep phase\n");
-	  }
-	}
+          }
+        }
       }
       assert(alive_in_block + dead_in_block + free_in_block == capacity);
       
@@ -789,7 +779,7 @@ void major_sweep_phase_old()
         fprintf(stderr,"MAJOR OLD: reclaim empty block %p\n",block);
 #endif
         reclaim_empty_block(AT_OLD_BLOCK, size, block, prev_block);
-      } else if(0 && 100*alive_in_block/capacity <= TO_YOUNG_RATIO) {
+      } else if (0 && 100*alive_in_block/capacity <= TO_YOUNG_RATIO) {
         promote_block_to_young(size, block, prev_block);
         old_bytes_in_young_blocks_after_last_major += (alive_in_block*SIZE_TO_BYTES(size));
       } else {
@@ -843,16 +833,16 @@ void major_sweep_phase_young()
       int free_in_block  = 0;
       int old_in_block   = 0;
       int young_in_block = 0;
-      int capacity = (end-(block->data))/size;
+      ptrdiff_t capacity = (end - (block->data))/size;
       header_type *cur;
       
       assert(block->size == size);
 
       old_freelist = ti->at_freelist;
       for(cur=block->data ; cur<end ; cur+=size) {
-	ATerm t = (ATerm)cur;
-	if(IS_MARKED(t->header)) {
-	  CLR_MARK(t->header);
+        ATerm t = (ATerm)cur;
+        if(IS_MARKED(t->header)) {
+          CLR_MARK(t->header);
           alive_in_block++;
           empty = 0;
           if(IS_OLD(t->header)) {
@@ -861,8 +851,8 @@ void major_sweep_phase_young()
             young_in_block++;
             INCREMENT_AGE(t->header);
           }
-	} else {
-	  switch(ATgetType(t)) {
+        } else {
+          switch(ATgetType(t)) {
               case AT_FREE:
                 t->aterm.next = ti->at_freelist;
                 ti->at_freelist = t;
@@ -890,8 +880,8 @@ void major_sweep_phase_young()
                 break;
               default:
                 ATabort("panic in sweep phase\n");
-	  }
-	}
+          }
+        }
       }
       assert(alive_in_block + dead_in_block + free_in_block == capacity);
       
@@ -914,7 +904,7 @@ void major_sweep_phase_young()
         fprintf(stderr,"MAJOR YOUNG: reclaim empty block %p\n",block);
 #endif
         ti->at_freelist = old_freelist;
-	reclaim_empty_block(AT_BLOCK, size, block, prev_block);
+        reclaim_empty_block(AT_BLOCK, size, block, prev_block);
       } else if(end==block->end && 100*old_in_block/capacity >= TO_OLD_RATIO) {
         if(young_in_block == 0) {
 #ifdef GC_VERBOSE
@@ -988,36 +978,36 @@ void minor_sweep_phase_young()
     Block *block = ti->at_blocks[AT_BLOCK];
     header_type *end = ti->top_at_blocks;
 
-      /* empty the freelist*/
+      /* empty the freelist */
     ti->at_freelist = NULL;
         
-    while(block) {
-        /* set empty = 0 to avoid recycling*/
+    while (block) {
+        /* set empty = 0 to avoid recycling */
       int empty = 1;
       int alive_in_block = 0;
       int dead_in_block  = 0;
       int free_in_block  = 0;
       int old_in_block  = 0;
-      int capacity = (end-(block->data))/size;
+      ptrdiff_t capacity = (end - (block->data))/size;
       header_type *cur;
       
       assert(block->size == size);
       
       old_freelist = ti->at_freelist;
       for(cur=block->data ; cur<end ; cur+=size) {
-	ATerm t = (ATerm)cur;
-	if(IS_MARKED(t->header) || IS_OLD(t->header)) {
+        ATerm t = (ATerm)cur;
+        if(IS_MARKED(t->header) || IS_OLD(t->header)) {
           if(IS_OLD(t->header)) {
             old_in_block++;
           }else{
-          	INCREMENT_AGE(t->header);
+                INCREMENT_AGE(t->header);
           }
           CLR_MARK(t->header);
           alive_in_block++;
           empty = 0;
           assert(!IS_MARKED(t->header));
-	} else {
-	  switch(ATgetType(t)) {
+        } else {
+          switch(ATgetType(t)) {
               case AT_FREE:
                 /* ti->at_freelist is not empty: so DO NOT ADD t*/
                 t->aterm.next = ti->at_freelist;
@@ -1047,9 +1037,9 @@ void minor_sweep_phase_young()
 
               default:
                 ATabort("panic in sweep phase\n");
-	  }
+          }
           assert(!IS_MARKED(t->header));
-	}
+        }
       }
 
       assert(alive_in_block + dead_in_block + free_in_block == capacity);
@@ -1068,11 +1058,13 @@ void minor_sweep_phase_young()
         ti->at_freelist = old_freelist;
       }
       
-       /* TODO: create freeList Old*/
-      if(0 && empty) {
+       /* TODO: create freeList Old */
+      if (/* DISABLES CODE */ (0) && empty) {
+          /* the preceding if statement gives Clang warning of not executible code with parens around 0 */
+          /* FIXME */
         ti->at_freelist = old_freelist;
         reclaim_empty_block(AT_BLOCK, size, block, prev_block);
-      } else if(0 && 100*old_in_block/capacity >= TO_OLD_RATIO) {
+      } else if (0 && (100*old_in_block/capacity >= TO_OLD_RATIO)) {
         promote_block_to_old(size, block, prev_block);
       } else {
         old_bytes_in_young_blocks_since_last_major += (old_in_block*SIZE_TO_BYTES(size));
@@ -1347,21 +1339,21 @@ void AT_cleanupGC()
     fprintf(file, "(all statistics are printed min/avg/max)\n");
     if(at_gc_count > 0) {
       if(nr_marks > 0) {
-	fprintf(file, "  mark stack needed: %d/%d/%d (%d marks)\n", 
-		mark_stats[IDX_MIN],
+        fprintf(file, "  mark stack needed: %d/%d/%d (%d marks)\n",
+                mark_stats[IDX_MIN],
                 mark_stats[IDX_TOTAL]/nr_marks, 
-		mark_stats[IDX_MAX], nr_marks);
+                mark_stats[IDX_MAX], nr_marks);
       }
       fprintf(file, "  marking  took %.2f/%.2f/%.2f seconds, total: %.2f\n", 
-	      ((double)mark_time[IDX_MIN])/(double)CLOCK_DIVISOR,
-	      (((double)mark_time[IDX_TOTAL])/(double)at_gc_count)/(double)CLOCK_DIVISOR,
-	      ((double)mark_time[IDX_MAX])/(double)CLOCK_DIVISOR,
-	      ((double)mark_time[IDX_TOTAL])/(double)CLOCK_DIVISOR);
+              ((double)mark_time[IDX_MIN])/(double)CLOCK_DIVISOR,
+              (((double)mark_time[IDX_TOTAL])/(double)at_gc_count)/(double)CLOCK_DIVISOR,
+              ((double)mark_time[IDX_MAX])/(double)CLOCK_DIVISOR,
+              ((double)mark_time[IDX_TOTAL])/(double)CLOCK_DIVISOR);
       fprintf(file, "  sweeping took %.2f/%.2f/%.2f seconds, total: %.2f\n", 
-	      ((double)sweep_time[IDX_MIN])/(double)CLOCK_DIVISOR,
-	      (((double)sweep_time[IDX_TOTAL])/(double)at_gc_count)/(double)CLOCK_DIVISOR,
-	      ((double)sweep_time[IDX_MAX])/(double)CLOCK_DIVISOR,
-	      ((double)sweep_time[IDX_TOTAL])/(double)CLOCK_DIVISOR);
+              ((double)sweep_time[IDX_MIN])/(double)CLOCK_DIVISOR,
+              (((double)sweep_time[IDX_TOTAL])/(double)at_gc_count)/(double)CLOCK_DIVISOR,
+              ((double)sweep_time[IDX_MAX])/(double)CLOCK_DIVISOR,
+              ((double)sweep_time[IDX_TOTAL])/(double)CLOCK_DIVISOR);
     }
 #ifdef WIN32
     fprintf(file, "Note: WinNT times are absolute, and might be influenced by other processes.\n");
@@ -1372,13 +1364,13 @@ void AT_cleanupGC()
   if(flags & PRINT_GC_STATS) {
     if(at_gc_count > 0) {
       fprintf(file, "\n  stack depth: %d/%d/%d words\n", 
-	      stack_depth[IDX_MIN],  
-	      stack_depth[IDX_TOTAL]/at_gc_count,
-	      stack_depth[IDX_MAX]);
+              stack_depth[IDX_MIN],
+              stack_depth[IDX_TOTAL]/at_gc_count,
+              stack_depth[IDX_MAX]);
       fprintf(file, "\n  reclamation percentage: %d/%d/%d\n",
-	      reclaim_perc[IDX_MIN],
-	      reclaim_perc[IDX_TOTAL]/at_gc_count,
-	      reclaim_perc[IDX_MAX]);
+              reclaim_perc[IDX_MIN],
+              reclaim_perc[IDX_TOTAL]/at_gc_count,
+              reclaim_perc[IDX_MAX]);
     }
   }
 }

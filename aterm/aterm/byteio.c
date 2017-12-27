@@ -7,11 +7,11 @@
 #include "util.h"
 #include "memory.h"
 
-/*{{{  static void resize_buffer(byte_writer *writer, int delta) */
+/*{{{  static void resize_buffer(byte_writer *writer, size_t delta) */
 
-static void resize_buffer(byte_writer *writer, int delta)
+static void resize_buffer(byte_writer *writer, size_t delta)
 {
-  int size_needed, new_size;
+  size_t size_needed, new_size;
 
   assert(writer->type == STRING_WRITER);
 
@@ -34,7 +34,7 @@ int write_byte(int byte, byte_writer *writer)
 {
   switch (writer->type) {
     case STRING_WRITER:
-      resize_buffer(writer, 1);
+      resize_buffer(writer, 1L);
       writer->u.string_data.buf[writer->u.string_data.cur_size++] = (char)byte;
       return byte;
 
@@ -48,9 +48,9 @@ int write_byte(int byte, byte_writer *writer)
 }
 
 /*}}}  */
-/*{{{  unsigned int write_bytes(const char *buf, unsigned int count, byte_writer *writer) */
+/*{{{  size_t write_bytes(const char *buf, size_t count, byte_writer *writer) */
 
-unsigned int write_bytes(const char *buf, unsigned int count, byte_writer *writer)
+size_t write_bytes(const char *buf, size_t count, byte_writer *writer)
 {
   switch (writer->type) {
     case STRING_WRITER:
@@ -60,12 +60,12 @@ unsigned int write_bytes(const char *buf, unsigned int count, byte_writer *write
       return count;
 
     case FILE_WRITER:
-      return fwrite(buf, 1, count, writer->u.file_data);
+      return fwrite(buf, 1L, count, writer->u.file_data);
       
     default:
       abort();
   }
-  return 0;
+  return 0L;
 }
 
 /*}}}  */
@@ -73,7 +73,8 @@ unsigned int write_bytes(const char *buf, unsigned int count, byte_writer *write
 
 int read_byte(byte_reader *reader)
 {
-  int index, c;
+  int c;
+  size_t index;
 
   c = EOF;
   switch (reader->type) {
@@ -100,12 +101,12 @@ int read_byte(byte_reader *reader)
 }
 
 /*}}}  */
-/*{{{  unsigned int read_bytes(char *buf, int count, byte_reader *reader) */
+/*{{{  size_t read_bytes(char *buf, size_t count, byte_reader *reader) */
 
-unsigned int read_bytes(char *buf, unsigned int count, byte_reader *reader)
+size_t read_bytes(char *buf, size_t count, byte_reader *reader)
 {
-  unsigned int index, size, left;
-  int result;
+  ptrdiff_t  left;
+  size_t     index, size, result;
 
   result = 0;
   switch (reader->type) {
@@ -126,7 +127,7 @@ unsigned int read_bytes(char *buf, unsigned int count, byte_reader *reader)
       break;
 
     case FILE_READER:
-      result = fread(buf, 1, count, reader->u.file_data);
+      result = fread(buf, 1L, count, reader->u.file_data);
       reader->bytes_read += count;
       break;
       
@@ -147,9 +148,9 @@ void init_file_reader(byte_reader *reader, FILE *file)
 }
 
 /*}}}  */
-/*{{{  void init_string_reader(byte_reader *reader, const unsigned char *buf, int max_size) */
+/*{{{  void init_string_reader(byte_reader *reader, const unsigned char *buf, size_t max_size) */
 
-void init_string_reader(byte_reader *reader, const unsigned char *buf, int max_size)
+void init_string_reader(byte_reader *reader, const unsigned char *buf, size_t max_size)
 {
   reader->type = STRING_READER;
   reader->bytes_read = 0;

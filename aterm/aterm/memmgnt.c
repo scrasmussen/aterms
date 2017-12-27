@@ -8,8 +8,6 @@
 #include <dmalloc.h>
 #endif
 
-char memmgnt_id[] = "$Id$";
-
 extern ATbool low_memory;
 void free_unused_blocks();
 
@@ -91,8 +89,8 @@ ATprotected_block find_best_unused_block(size_t minsize, size_t maxsize)
   /* Returns a block that has at least minsize room, and is the closest match
    * to maxsize
    */
-  ATprotected_block block = unused_blocks, tail, best = NULL;
-  size_t bestsize = -1;
+  ATprotected_block block = unused_blocks, tail = NULL, best = NULL;
+  size_t bestsize = 0;
   size_t unused_blocks_count = 0;
   size_t optsize = maxsize + maxsize/2;
   
@@ -144,6 +142,7 @@ ATprotected_block find_best_unused_block(size_t minsize, size_t maxsize)
   else if (unused_blocks_count > MAX_UNUSED_BLOCKS) {
     /* Remove the oldest block from the unused chain */
   	
+    assert(tail != NULL);
     tail->prev->next = NULL;
     AT_free(tail);
   }
@@ -245,13 +244,14 @@ void free_block(ATprotected_block block)
       block->next->prev = block->prev;
   }
   else {
-    if (block->protsize >= 0)
+    if (block->protsize >= 0) {
       protected_blocks = block->next;
-    else
+    } else {
       unused_blocks = block->next;
-      
-    if (block->next)
+    }
+    if (block->next) {
       block->next->prev = NULL;
+    }
   }
     
   if (!low_memory) {
